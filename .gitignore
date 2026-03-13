@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 instructions.md
+docker-compose.yml
 
 # OS and editor files
 .DS_Store
