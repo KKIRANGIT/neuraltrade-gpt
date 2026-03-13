@@ -1,0 +1,62 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Rust
+target/
+
+# Java / Maven
+.mvn/
+**/target/
+*.class
+
+# Docker and local runtime artifacts
+.docker/
+compose.override.yml
+
+# Project-generated data
+models/
+data/
+
+# Misc build artifacts
+*.pid
+*.seed
+*.stackdump

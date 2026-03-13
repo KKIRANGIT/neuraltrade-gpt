@@ -1,5 +1,16 @@
-# Multi-stage Rust build
-# Stage 1: builder — rust:1.75-slim, cargo build --release
-# Stage 2: runtime — debian:bookworm-slim, copy binary
-# EXPOSE: health check port only (9001-9005)
-# CMD: ["/app/scoreboard-engine"]
+FROM rust:1.75-slim AS builder
+
+WORKDIR /build
+
+COPY services/scoreboard-engine/Cargo.toml Cargo.toml
+COPY services/scoreboard-engine/src src
+
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+COPY --from=builder /build/target/release/scoreboard-engine /app/scoreboard-engine
+
+CMD ["/app/scoreboard-engine"]

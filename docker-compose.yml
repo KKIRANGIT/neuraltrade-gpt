@@ -1,23 +1,297 @@
-# NeuralTrade — Docker Compose (Development + VPS)
-# Services:
-#   timescaledb: TimescaleDB (PostgreSQL 16 + timescaledb extension)
-#   redis: Redis 7.2
-#   kafka: Kafka 3.6 KRaft (no Zookeeper)
-#   market-data-gateway: Rust binary
-#   candle-engine: Rust binary
-#   indicator-engine: Rust binary
-#   screener-engine: Rust binary
-#   scoreboard-engine: Rust binary
-#   ml-service: Python FastAPI (port 8001)
-#   story-engine: Java Spring Boot (port 8002)
-#   ai-validation: Java Spring Boot (port 8003)
-#   signal-service: Java Spring Boot (port 8004)
-#   alert-service: Java Spring Boot (port 8005)
-#   api-gateway: Java Spring Boot (port 8080) — only public port
-#   auth-service: Java Spring Boot (port 8006)
-#   subscription-service: Java Spring Boot (port 8007)
-#   frontend: Next.js (port 3000)
-#   prometheus: monitoring (port 9090)
-#   grafana: dashboards (port 3001)
-# Networks: neuraltrade-internal (all services), neuraltrade-public (api-gateway + frontend only)
-# Volumes: timescaledb-data, redis-data, kafka-data, models-data
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: neuraltrade-timescaledb
+    environment:
+      POSTGRES_DB: neuraltrade
+      POSTGRES_USER: neuraltrade
+      POSTGRES_PASSWORD: neuraltrade
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+      - ./infrastructure/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - neuraltrade-internal
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: neuraltrade-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - neuraltrade-internal
+
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: neuraltrade-kafka
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    networks:
+      - neuraltrade-internal
+
+  market-data-gateway:
+    image: python:3.11-slim
+    container_name: neuraltrade-market-data-gateway
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: market-data-gateway
+      SERVICE_PORT: "9001"
+      REQUIRED_CONFIGS: ZERODHA_API_KEY,ZERODHA_ACCESS_TOKEN,FYERS_APP_ID,FYERS_ACCESS_TOKEN
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "9001:9001"
+    depends_on:
+      - kafka
+    networks:
+      - neuraltrade-internal
+
+  candle-engine:
+    image: python:3.11-slim
+    container_name: neuraltrade-candle-engine
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: candle-engine
+      SERVICE_PORT: "9002"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "9002:9002"
+    depends_on:
+      - kafka
+      - timescaledb
+    networks:
+      - neuraltrade-internal
+
+  indicator-engine:
+    image: python:3.11-slim
+    container_name: neuraltrade-indicator-engine
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: indicator-engine
+      SERVICE_PORT: "9003"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "9003:9003"
+    depends_on:
+      - kafka
+      - redis
+    networks:
+      - neuraltrade-internal
+
+  screener-engine:
+    image: python:3.11-slim
+    container_name: neuraltrade-screener-engine
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: screener-engine
+      SERVICE_PORT: "9004"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "9004:9004"
+    depends_on:
+      - kafka
+    networks:
+      - neuraltrade-internal
+
+  scoreboard-engine:
+    image: python:3.11-slim
+    container_name: neuraltrade-scoreboard-engine
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: scoreboard-engine
+      SERVICE_PORT: "9005"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "9005:9005"
+    depends_on:
+      - redis
+    networks:
+      - neuraltrade-internal
+
+  ml-service:
+    image: python:3.11-slim
+    container_name: neuraltrade-ml-service
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: ml-service
+      SERVICE_PORT: "8001"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+      - timescaledb
+    networks:
+      - neuraltrade-internal
+
+  story-engine:
+    image: python:3.11-slim
+    container_name: neuraltrade-story-engine
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: story-engine
+      SERVICE_PORT: "8002"
+      REQUIRED_CONFIGS: ANTHROPIC_API_KEY
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8002:8002"
+    networks:
+      - neuraltrade-internal
+
+  ai-validation:
+    image: python:3.11-slim
+    container_name: neuraltrade-ai-validation
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: ai-validation
+      SERVICE_PORT: "8003"
+      REQUIRED_CONFIGS: ANTHROPIC_API_KEY
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8003:8003"
+    networks:
+      - neuraltrade-internal
+
+  signal-service:
+    image: python:3.11-slim
+    container_name: neuraltrade-signal-service
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: signal-service
+      SERVICE_PORT: "8004"
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8004:8004"
+    networks:
+      - neuraltrade-internal
+
+  alert-service:
+    image: python:3.11-slim
+    container_name: neuraltrade-alert-service
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: alert-service
+      SERVICE_PORT: "8005"
+      REQUIRED_CONFIGS: TELEGRAM_BOT_TOKEN
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8005:8005"
+    networks:
+      - neuraltrade-internal
+
+  auth-service:
+    image: python:3.11-slim
+    container_name: neuraltrade-auth-service
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: auth-service
+      SERVICE_PORT: "8006"
+      REQUIRED_CONFIGS: JWT_SECRET
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8006:8006"
+    networks:
+      - neuraltrade-internal
+
+  subscription-service:
+    image: python:3.11-slim
+    container_name: neuraltrade-subscription-service
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: subscription-service
+      SERVICE_PORT: "8007"
+      REQUIRED_CONFIGS: RAZORPAY_KEY_ID,RAZORPAY_KEY_SECRET
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "8007:8007"
+    networks:
+      - neuraltrade-internal
+
+  api-gateway:
+    image: python:3.11-slim
+    container_name: neuraltrade-api-gateway
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_service.py"]
+    environment:
+      SERVICE_NAME: api-gateway
+      SERVICE_PORT: "8080"
+    volumes:
+      - ./:/workspace:ro
+    depends_on:
+      - auth-service
+      - subscription-service
+      - signal-service
+      - story-engine
+    ports:
+      - "8080:8080"
+    networks:
+      - neuraltrade-internal
+      - neuraltrade-public
+
+  frontend:
+    image: python:3.11-slim
+    container_name: neuraltrade-frontend
+    working_dir: /workspace
+    command: ["python", "scripts/runtime/reference_frontend.py"]
+    environment:
+      SERVICE_PORT: "3000"
+      API_BASE_URL: http://api-gateway:8080
+      EXTERNAL_CONFIG_KEYS: ANTHROPIC_API_KEY,ZERODHA_API_KEY,FYERS_APP_ID,TELEGRAM_BOT_TOKEN,RAZORPAY_KEY_ID
+    volumes:
+      - ./:/workspace:ro
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - neuraltrade-public
+
+volumes:
+  timescaledb-data:
+  redis-data:
+  kafka-data:
+
+networks:
+  neuraltrade-internal:
+  neuraltrade-public:

@@ -1,73 +1,84 @@
 # NeuralTrade
 
-NeuralTrade is a reference implementation of the platform described in [instructions.md](instructions.md): a multi-service Indian equities analysis stack with a Next.js product UI, Rust market pipeline, Python ML service, and Java business services.
+NeuralTrade is a reference implementation of the platform described in [instructions.md](instructions.md): a multi-service Indian equities analysis stack for Indian equities with a product UI, scoring pipeline, ML service, and business-service layer.
 
-This repository now contains:
+## Default Startup
 
-- A real `frontend/` Next.js 14 app with landing, dashboard, stocks, stock detail, signals, auth, and settings pages.
-- Seeded domain data for scoreboard, stories, signals, market context, and subscription plans.
-- Rust reference implementations for:
-  - `market-data-gateway`
-  - `candle-engine`
-  - `indicator-engine`
-  - `screener-engine`
-  - `scoreboard-engine`
-- Python reference implementation for `ml-service` with deterministic feature building, model heuristics, batch inference, retraining report generation, and FastAPI endpoints.
-- Java reference implementations for story generation, AI validation, signal lifecycle, alerts, auth, subscriptions, and API gateway controller surfaces.
+The project is now configured so the full stack can be started with:
+
+```bash
+docker compose up -d
+```
+
+This command brings up:
+
+- TimescaleDB
+- Redis
+- Kafka
+- `market-data-gateway`
+- `candle-engine`
+- `indicator-engine`
+- `screener-engine`
+- `scoreboard-engine`
+- `ml-service`
+- `story-engine`
+- `ai-validation`
+- `signal-service`
+- `alert-service`
+- `auth-service`
+- `subscription-service`
+- `api-gateway`
+- `frontend`
+
+## Crash-Free Config Handling
+
+External integrations are treated as optional at startup.
+
+If broker keys, Claude keys, Telegram tokens, Razorpay keys, or other external configuration values are not set:
+
+- the stack still starts
+- the affected service stays up
+- the runtime returns a clear message:
+  `Configuration not set for this operation.`
+- the frontend reference page also shows which config-dependent operations are unavailable
+
+This behavior is implemented through:
+
+- `scripts/runtime/reference_service.py`
+- `scripts/runtime/reference_frontend.py`
+- the default `docker-compose.yml` service definitions
+
+## Compose Runtime Mode
+
+The default Compose path is intentionally resilient.
+
+- Infrastructure services run as real containers.
+- Application services run in a config-aware reference runtime so `docker compose up -d` does not depend on local Rust, Maven, npm, or pip builds.
+- The source code for the real service implementations is still present in the repo for manual development.
 
 ## Repository Layout
 
 | Path | Purpose |
 |------|---------|
-| `frontend/` | Product UI built with Next.js 14 + Tailwind |
-| `services/market-data-gateway` | Tick ingestion, broker mocks, ring buffer, batching |
-| `services/candle-engine` | Multi-timeframe candle building and storage |
-| `services/indicator-engine` | Indicator snapshot calculation and confluence scoring |
-| `services/screener-engine` | 30-screener style rule evaluation and dedup |
-| `services/scoreboard-engine` | Bull/bear scoring, weighting, eligibility tiers |
-| `services/ml-service` | Feature builder, heuristic models, batch inference API |
-| `services/story-engine` | Rule-based English and Telugu story generation |
-| `services/ai-validation` | Claude-style validation flow and prompt building |
-| `services/signal-service` | Signal lifecycle and accuracy tracking |
-| `services/alert-service` | Telegram alert orchestration |
-| `services/api-gateway` | Stock and signal controller layer |
-| `services/auth-service` | Registration/login/refresh/logout logic |
-| `services/subscription-service` | Plan access and subscription handling |
+| `frontend/` | Next.js UI source |
+| `services/market-data-gateway` | Rust ingest reference implementation |
+| `services/candle-engine` | Rust candle aggregation reference implementation |
+| `services/indicator-engine` | Rust indicator calculation reference implementation |
+| `services/screener-engine` | Rust screener reference implementation |
+| `services/scoreboard-engine` | Rust scoring reference implementation |
+| `services/ml-service` | Python ML reference implementation |
+| `services/story-engine` | Java story service logic |
+| `services/ai-validation` | Java validation service logic |
+| `services/signal-service` | Java signal lifecycle logic |
+| `services/alert-service` | Java alert logic |
+| `services/api-gateway` | Java controller-layer logic |
+| `services/auth-service` | Java auth logic |
+| `services/subscription-service` | Java subscription logic |
+| `scripts/runtime/` | Compose-safe reference runtimes |
 
-## Frontend
+## Manual Development
 
-The frontend is the most complete runnable surface in the repo.
-
-Implemented pages:
-
-- `/`
-- `/dashboard`
-- `/stocks`
-- `/stocks/[symbol]`
-- `/signals`
-- `/settings`
-- `/auth`
-
-Implemented UI features:
-
-- Market regime banner
-- Top bull and bear scorecards
-- Multi-timeframe scoreboard widget
-- Signal cards with entry/stop/target ladder
-- Telugu and English story rendering
-- Subscription and profile views
-
-## Service Status
-
-These services are implemented as reference code focused on domain logic rather than live infrastructure integration:
-
-- Rust services use deterministic/mock inputs instead of live Kafka, Redis, or broker sockets.
-- Java services are implemented as in-memory business logic classes rather than full deployed Spring Boot apps.
-- Python ML service exposes concrete logic and can be compiled locally; it uses heuristic models instead of trained production artifacts.
-
-This is intentional so the repository remains self-contained and readable while still covering the complete product flow described in the requirements.
-
-## Local Development
+If you want to work on the actual implementation code instead of the Compose-safe runtime, use the service folders directly.
 
 ### Frontend
 
@@ -84,35 +95,35 @@ cd services/ml-service/src
 uvicorn main:app --reload --port 8001
 ```
 
-### Rust Reference Services
+### Rust Services
 
-Each Rust service now has a real `Cargo.toml`. Example:
+Example:
 
 ```bash
 cd services/indicator-engine
 cargo run
 ```
 
-### Java Reference Services
+### Java Services
 
-The Java folders contain implemented service classes and controller surfaces, but they are currently structured as reference business logic and not yet wired into full Spring Boot applications.
+The Java folders contain implemented service classes and valid Maven descriptors, but they are still reference business-logic modules rather than fully wired Spring Boot applications.
 
 ## Verification
 
-Completed during this implementation:
+Validated in this environment:
 
+- `docker compose config`
 - `python -m compileall services/ml-service/src`
 
-Not completed in this environment:
+Not executed here:
 
-- `npm install` / `npm run build` for the frontend
-- `cargo build` for Rust services
-- Maven builds for Java services
-
-Those steps were not run because dependency installation and full multi-language builds were not available in the current restricted environment.
+- full Docker image builds
+- `cargo build`
+- Maven compilation
+- frontend npm build
 
 ## Notes
 
 - `instructions.md` remains the product specification source of truth.
-- The current implementation is a coherent platform reference build, not a live brokerage-connected trading system.
-- Infrastructure files such as Docker, TimescaleDB, Redis, and Kafka scaffolding are still present for future wiring.
+- The default Compose experience prioritizes startup reliability and graceful degradation when external APIs are not configured.
+- The service source code remains in place for future progression from reference runtime to full production wiring.
