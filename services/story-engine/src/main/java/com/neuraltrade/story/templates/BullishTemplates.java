@@ -1,0 +1,8 @@
+// Pre-written bullish story sentences in English
+// Template keys match indicator conditions:
+//   ABOVE_EMA200_STRONG, EMA_STACK_PERFECT_BULL, RSI_HEALTHY_BULL
+//   RSI_OVERBOUGHT_WARNING, MACD_ACCELERATING, VOLUME_SURGE_BULLISH
+//   BB_SQUEEZE_FORMING, SQUEEZE_RELEASED_UP, SUPERTREND_FLIP_BULL
+//   VWAP_ABOVE_BULLISH, AT_SUPPORT_ZONE, NEAR_52W_HIGH
+//   FII_BUYING_CONTEXT, SECTOR_LEADING, VERDICT_STRONG_BULL
+// Each template has {variable} placeholders filled at runtime.

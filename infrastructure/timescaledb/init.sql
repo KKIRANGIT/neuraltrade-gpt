@@ -1,0 +1,12 @@
+-- TimescaleDB initialization
+-- Tables to create:
+--   candles: instrument_id, timeframe, open_time, open, high, low, close, volume
+--   indicators: instrument_id, timeframe, timestamp, (all 39 indicator columns)
+--   signals: all TradingSignal fields + outcome fields
+--   signal_outcomes: signal_id, outcome, actual_return, hold_bars
+--   stocks: instrument_id, symbol, sector_id, market_cap_cr, etc.
+--   users: id, email, password_hash, plan, language_preference
+--   subscriptions: user_id, plan, start_date, end_date, razorpay_sub_id
+--   stories: instrument_id, generated_at, story_type, en_text, te_text
+-- Hypertables (TimescaleDB): candles, indicators, signals
+-- Indexes: (instrument_id, timeframe, open_time DESC)

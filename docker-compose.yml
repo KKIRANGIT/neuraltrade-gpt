@@ -1,0 +1,23 @@
+# NeuralTrade — Docker Compose (Development + VPS)
+# Services:
+#   timescaledb: TimescaleDB (PostgreSQL 16 + timescaledb extension)
+#   redis: Redis 7.2
+#   kafka: Kafka 3.6 KRaft (no Zookeeper)
+#   market-data-gateway: Rust binary
+#   candle-engine: Rust binary
+#   indicator-engine: Rust binary
+#   screener-engine: Rust binary
+#   scoreboard-engine: Rust binary
+#   ml-service: Python FastAPI (port 8001)
+#   story-engine: Java Spring Boot (port 8002)
+#   ai-validation: Java Spring Boot (port 8003)
+#   signal-service: Java Spring Boot (port 8004)
+#   alert-service: Java Spring Boot (port 8005)
+#   api-gateway: Java Spring Boot (port 8080) — only public port
+#   auth-service: Java Spring Boot (port 8006)
+#   subscription-service: Java Spring Boot (port 8007)
+#   frontend: Next.js (port 3000)
+#   prometheus: monitoring (port 9090)
+#   grafana: dashboards (port 3001)
+# Networks: neuraltrade-internal (all services), neuraltrade-public (api-gateway + frontend only)
+# Volumes: timescaledb-data, redis-data, kafka-data, models-data

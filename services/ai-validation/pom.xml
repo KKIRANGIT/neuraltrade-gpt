@@ -1,0 +1,6 @@
+<!-- ai-validation pom.xml -->
+<!-- Spring Boot 3.2, Java 21 -->
+<!-- Dependencies: spring-boot-starter-web, spring-boot-starter-data-jpa -->
+<!-- spring-kafka, spring-data-redis, spring-security -->
+<!-- lombok, mapstruct, flyway -->
+<!-- ai-validation specific: see service description in claude.md -->

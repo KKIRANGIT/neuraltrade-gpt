@@ -1,0 +1,14 @@
+# scoreboard-engine Cargo.toml
+# [package] name = "scoreboard-engine", version = "0.1.0", edition = "2021"
+# [dependencies]
+# tokio = { version = "1", features = ["full"] }
+# rdkafka = "0.36"  — Kafka producer/consumer
+# redis = { version = "0.25", features = ["tokio-comp"] }
+# crossbeam = "0.8" — SPSC ring buffer
+# rayon = "1.8"     — parallel iteration (indicator engine)
+# serde = { version = "1", features = ["derive"] }
+# serde_json = "1"
+# tracing = "0.1"
+# tracing-subscriber = "0.3"
+# anyhow = "1"
+# tokio-postgres = "0.7"  (candle-engine, signal-service only)

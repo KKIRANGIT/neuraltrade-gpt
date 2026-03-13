@@ -1,0 +1,6 @@
+<!-- signal-service pom.xml -->
+<!-- Spring Boot 3.2, Java 21 -->
+<!-- Dependencies: spring-boot-starter-web, spring-boot-starter-data-jpa -->
+<!-- spring-kafka, spring-data-redis, spring-security -->
+<!-- lombok, mapstruct, flyway -->
+<!-- signal-service specific: see service description in claude.md -->
