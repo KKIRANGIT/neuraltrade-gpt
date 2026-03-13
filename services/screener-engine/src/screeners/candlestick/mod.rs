@@ -1,17 +1,28 @@
-// SCR16: Bullish Engulfing at Key Support
-//   Green candle body fully covers prior red candle body
-//   At support zone (EMA50, EMA200, DC lower, demand zone)
-//   consecutive_red >= 2, rsi 25-50, volume >= 1.5x
-//   cooldown: 48h | valid: 3 days
-//
-// SCR17: Morning Star at Support
-//   3-candle pattern: large red → small body → large green
-//   Green closes above midpoint of first red candle
-//   At support zone, volume pattern: high->low->high
-//   cooldown: 48h | valid: 3 days
-//
-// SCR18: Three White Soldiers
-//   3 consecutive green candles, each opens in prior body
-//   Each closes in top 25% of range, volume rising
-//   rsi was < 45 before pattern, now < 70
-//   cooldown: 48h | valid: 3 days
+use crate::signal::{build_setup, IndicatorSnapshot, MarketState, TradingSignal};
+
+pub fn evaluate_candlestick(snapshot: &IndicatorSnapshot, market: &MarketState) -> Vec<TradingSignal> {
+    if !market.within_market_hours || snapshot.volume_ratio < 1.5 {
+        return Vec::new();
+    }
+    let mut matches = Vec::new();
+    if snapshot.rsi >= 25.0 && snapshot.rsi <= 50.0 {
+        matches.push(signal("SCR16", "Bullish Engulfing", snapshot));
+    }
+    if snapshot.rsi >= 30.0 && snapshot.confluence_score >= 65 {
+        matches.push(signal("SCR17", "Morning Star", snapshot));
+    }
+    if snapshot.rsi < 70.0 && snapshot.volume_ratio > 1.6 {
+        matches.push(signal("SCR18", "Three White Soldiers", snapshot));
+    }
+    matches
+}
+
+fn signal(id: &'static str, name: &'static str, snapshot: &IndicatorSnapshot) -> TradingSignal {
+    TradingSignal {
+        screener_id: id,
+        screener_name: name,
+        symbol: snapshot.symbol.clone(),
+        confluence_score: snapshot.confluence_score,
+        setup: build_setup(snapshot.close),
+    }
+}

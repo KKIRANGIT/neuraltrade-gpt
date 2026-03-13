@@ -1,4 +1,19 @@
-// CandlePublisher
-// On candle close event: publish to Kafka topic candles.{timeframe}
-// Message: CompletedCandle { instrument_id, tf, ohlcv, timestamp }
-// Also updates Redis key: candle:{instrument_id}:{tf}:latest
+use crate::CompletedCandle;
+
+pub struct CandlePublisher {
+    published: Vec<(String, CompletedCandle)>,
+}
+
+impl CandlePublisher {
+    pub fn new() -> Self {
+        Self { published: Vec::new() }
+    }
+
+    pub fn publish(&mut self, candle: CompletedCandle) {
+        self.published.push((candle.timeframe.topic().to_string(), candle));
+    }
+
+    pub fn published_count(&self) -> usize {
+        self.published.len()
+    }
+}

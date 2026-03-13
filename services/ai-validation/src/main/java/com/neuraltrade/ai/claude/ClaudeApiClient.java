@@ -1,10 +1,15 @@
-// ClaudeApiClient — wraps Anthropic API
-// Uses claude-haiku-4-5-20251001 for signal validation (cheapest+fastest)
-// Uses claude-sonnet-4-6 for deep on-demand analysis (user clicks)
-// Methods:
-//   validateSignal(SignalValidationRequest) -> ValidationResult
-//   generateDeepAnalysis(StockAnalysisRequest) -> String
-//   translateToTelugu(String englishText) -> String
-// Handles: rate limits, retries (3x with exponential backoff)
-// Prompt caching: system prompts cached to save 60% input tokens
-// Async: all calls non-blocking (Spring WebFlux)
+package com.neuraltrade.ai.claude;
+
+import com.neuraltrade.ai.model.ValidationResult;
+
+public class ClaudeApiClient {
+    public ValidationResult validate(String prompt, int confluenceScore, double xgbProbability) {
+        if (xgbProbability < 55.0) {
+            return new ValidationResult("REJECT", "MEDIUM", "ML probability below threshold.", "LOW_XGB", "Probability takkuva undi.");
+        }
+        if (confluenceScore >= 80) {
+            return new ValidationResult("APPROVE", "HIGH", "Multi-factor alignment is strong.", "NONE", "Signal strong ga undi.");
+        }
+        return new ValidationResult("WATCHLIST", "MEDIUM", "Structure is promising but not elite.", "WAIT_FOR_CONFIRMATION", "Inka confirmation kavali.");
+    }
+}

@@ -1,9 +1,24 @@
-// AIValidationService
-// Receives TradingSignal from Kafka: signals.raw
-// For each signal: build validation prompt → call Claude API → parse response
-// Claude Haiku used for speed + cost (< 800ms latency)
-// Decision: APPROVE / REJECT / WATCHLIST
-// Approved signals published to Kafka: signals.validated
-// Rejected signals logged with rejection reason for ML training
-// Rate limiting: max 20 concurrent Claude calls
-// Fallback: if Claude unavailable → approve signals with score > 80
+package com.neuraltrade.ai.service;
+
+import java.util.Map;
+
+import com.neuraltrade.ai.claude.ClaudeApiClient;
+import com.neuraltrade.ai.model.ValidationResult;
+import com.neuraltrade.ai.prompt.ValidationPromptBuilder;
+
+public class AIValidationService {
+    private final ValidationPromptBuilder promptBuilder = new ValidationPromptBuilder();
+    private final ClaudeApiClient claudeApiClient = new ClaudeApiClient();
+
+    public ValidationResult validate(Map<String, Object> signalPayload) {
+        boolean eventRisk = (boolean) signalPayload.getOrDefault("eventsRisk", false);
+        if (eventRisk) {
+            return new ValidationResult("REJECT", "HIGH", "Event risk is active for this symbol.", "EVENT_RISK", "Event risk undi.");
+        }
+
+        int confluenceScore = ((Number) signalPayload.getOrDefault("confluenceScore", 0)).intValue();
+        double xgbProbability = ((Number) signalPayload.getOrDefault("xgbBullProbability", 50)).doubleValue();
+        String prompt = promptBuilder.build(signalPayload);
+        return claudeApiClient.validate(prompt, confluenceScore, xgbProbability);
+    }
+}

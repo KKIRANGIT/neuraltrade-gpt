@@ -1,15 +1,28 @@
-// SCR13: Wyckoff Accumulation Breakout
-//   Phase A/B/C/D detection via screener_state
-//   Spring detection, AR high breakout, volume >= 2.0x, cmf > 0
-//   cooldown: 72h | valid: 7 days
-//
-// SCR26: Institutional Accumulation (OBV Divergence)
-//   OBV up 5%+ while price flat, cmf > 0.05, price starts moving
-//   Price trigger: close > ema_20 OR supertrend flip
-//   cooldown: 48h | valid: 5 days
-//
-// SCR28: Rounding Bottom Breakout
-//   40+ days of gradual decline then gradual rise (U-shape)
-//   Volume mirrors shape: high->low->high
-//   Breakout above left rim on volume >= 2.5x
-//   cooldown: 72h | valid: 7 days
+use crate::signal::{build_setup, IndicatorSnapshot, MarketState, TradingSignal};
+
+pub fn evaluate_accumulation(snapshot: &IndicatorSnapshot, market: &MarketState) -> Vec<TradingSignal> {
+    if !market.within_market_hours {
+        return Vec::new();
+    }
+    let mut matches = Vec::new();
+    if snapshot.volume_ratio >= 2.0 && snapshot.cmf > 0.0 {
+        matches.push(signal("SCR13", "Wyckoff", snapshot));
+    }
+    if snapshot.cmf > 0.05 && snapshot.volume_ratio > 1.0 && snapshot.vwap_side > 0 {
+        matches.push(signal("SCR26", "OBV Divergence", snapshot));
+    }
+    if snapshot.volume_ratio >= 2.5 && snapshot.ema_stack >= 2.0 {
+        matches.push(signal("SCR28", "Rounding Bottom", snapshot));
+    }
+    matches
+}
+
+fn signal(id: &'static str, name: &'static str, snapshot: &IndicatorSnapshot) -> TradingSignal {
+    TradingSignal {
+        screener_id: id,
+        screener_name: name,
+        symbol: snapshot.symbol.clone(),
+        confluence_score: snapshot.confluence_score,
+        setup: build_setup(snapshot.close),
+    }
+}

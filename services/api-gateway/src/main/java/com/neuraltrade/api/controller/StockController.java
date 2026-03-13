@@ -1,10 +1,27 @@
-// StockController — REST endpoints for frontend
-// GET /api/stocks — list of all 500 stocks with basic scoreboard
-// GET /api/stocks/{symbol} — full stock data (scoreboard + story + signal)
-// GET /api/stocks/{symbol}/story — generated story (rule-based or AI)
-// GET /api/stocks/{symbol}/story/deep — on-demand Claude deep analysis
-// GET /api/stocks/{symbol}/indicators — full indicator snapshot
-// GET /api/stocks/{symbol}/sr-levels — support/resistance zones
-// GET /api/stocks/screener/{id} — stocks matching specific screener
-// GET /api/stocks/top/bull — top 20 bull scores
-// GET /api/stocks/top/bear — top 20 bear scores
+package com.neuraltrade.api.controller;
+
+import java.util.List;
+import java.util.Map;
+
+public class StockController {
+    private final List<Map<String, Object>> stocks = List.of(
+            Map.of("symbol", "RELIANCE", "bullScore", 86, "bearScore", 18, "signal", "SCR10"),
+            Map.of("symbol", "TCS", "bullScore", 81, "bearScore", 22, "signal", "SCR05"),
+            Map.of("symbol", "HDFCBANK", "bullScore", 78, "bearScore", 28, "signal", "SCR14")
+    );
+
+    public List<Map<String, Object>> listStocks() {
+        return stocks;
+    }
+
+    public Map<String, Object> getStock(String symbol) {
+        return stocks.stream()
+                .filter(stock -> symbol.equals(stock.get("symbol")))
+                .findFirst()
+                .orElse(Map.of("symbol", symbol, "status", "NOT_FOUND"));
+    }
+
+    public List<Map<String, Object>> topBull() {
+        return stocks;
+    }
+}

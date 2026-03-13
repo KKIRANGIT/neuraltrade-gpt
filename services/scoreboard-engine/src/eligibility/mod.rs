@@ -1,11 +1,24 @@
-// EligibilityGate
-// BULL eligible: bull_1d >= 50 AND bull_1h >= 45 AND bull_total >= 60
-//   AND bull_total > bear_total + 15 AND volume_ratio >= 1.0
-//   AND regime != VolatileCrisis AND close > ema_200_1d
-// BEAR eligible: bear_1d >= 50 AND bear_1h >= 45 AND bear_total >= 60
-//   AND bear_total > bull_total + 15 AND volume_ratio >= 1.0
-// Signal fire thresholds:
-//   >= 80: ELITE signal → fire immediately
-//   70-79: HIGH signal → fire after dedup check
-//   60-69: MEDIUM → add to watchlist only, no signal
-// Returns: EligibilityResult { bull_eligible, bear_eligible, signal_strength }
+pub fn classify_tier(bull_total: u8, bear_total: u8, daily_bull: u8, hourly_bull: u8, volume_ratio: f32, close_above_ema200: bool) -> String {
+    if daily_bull >= 50
+        && hourly_bull >= 45
+        && bull_total >= 80
+        && bull_total >= bear_total.saturating_add(15)
+        && volume_ratio >= 1.0
+        && close_above_ema200
+    {
+        return "ELITE".to_string();
+    }
+    if daily_bull >= 50
+        && hourly_bull >= 45
+        && bull_total >= 70
+        && bull_total >= bear_total.saturating_add(15)
+        && volume_ratio >= 1.0
+        && close_above_ema200
+    {
+        return "HIGH".to_string();
+    }
+    if bull_total >= 60 {
+        return "MEDIUM".to_string();
+    }
+    "WATCHLIST".to_string()
+}

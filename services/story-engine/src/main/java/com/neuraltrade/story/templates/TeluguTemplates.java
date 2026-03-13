@@ -1,6 +1,20 @@
-// Telugu translations of all story templates
-// Same keys as English templates, values in Telugu script
-// Variables: {symbol}, {price}, {ema200}, {rsi}, {volume_ratio} etc.
-// Uses natural Hyderabad Telugu style (conversational not formal)
-// Keeps in English: RSI, MACD, EMA, ATR, VWAP (no translation needed)
-// Keeps in original format: all prices with ₹ symbol
+package com.neuraltrade.story.templates;
+
+import java.util.List;
+
+public final class TeluguTemplates {
+    private TeluguTemplates() {}
+
+    public static List<String> bullish() {
+        return List.of(
+                "Stock long-term structure paina undi, kabatti buyers control lo unnaru.",
+                "RSI mariyu MACD rendu kuda momentum healthy ga undani chupistunnayi.",
+                "Volume move ni support chestondi, idi genuine continuation ki plus point.",
+                "Risk clear ga define chesukovachu kabatti idi disciplined setup.",
+                "Volatility manageable ga undi, staged exits ki scope undi.",
+                "ML layer kuda rule engine ni support chestondi.",
+                "Entry zone pullback lo hold chestunda ani careful ga watch cheyyali.",
+                "Verdict: bullish setup undi, kani clean execution tho matrame trade cheyyali."
+        );
+    }
+}

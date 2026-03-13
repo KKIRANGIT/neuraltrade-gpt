@@ -1,7 +1,100 @@
-// IndicatorSnapshot: 256-byte cache-aligned struct
-// All 39 indicator values as f32/f64 fields
-// Metadata: instrument_id, timeframe, timestamp_ns, bars_seen
-// Flags: ema_200_ready, adx_ready, bb_squeeze, supertrend_direction
-// MTF fields: tf_15m_bullish, tf_1h_bullish, tf_4h_bullish, tf_1d_bullish
-// MarketContext: nifty data, FII data, VIX, sector_performance array, regime
-// InstrumentMeta: symbol, sector_id, index_member, market_cap_cr, avg_daily_volume
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum Timeframe {
+    OneMinute,
+    FiveMinute,
+    FifteenMinute,
+    OneHour,
+    FourHour,
+    OneDay,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Candle {
+    pub instrument_id: u32,
+    pub timeframe: Timeframe,
+    pub timestamp_ns: u64,
+    pub open: f32,
+    pub high: f32,
+    pub low: f32,
+    pub close: f32,
+    pub volume: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MarketContext {
+    pub nifty_above_ema20: bool,
+    pub fii_buying: bool,
+    pub sector_positive: bool,
+    pub regime: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct IndicatorSnapshot {
+    pub instrument_id: u32,
+    pub timeframe: u8,
+    pub timestamp_ns: u64,
+    pub bars_seen: u16,
+    pub ema_9: f32,
+    pub ema_20: f32,
+    pub ema_50: f32,
+    pub ema_200: f32,
+    pub sma_20: f32,
+    pub sma_50: f32,
+    pub rsi_14: f32,
+    pub rsi_7: f32,
+    pub macd: f32,
+    pub macd_signal: f32,
+    pub macd_histogram: f32,
+    pub atr_14: f32,
+    pub atr_10: f32,
+    pub bb_upper: f32,
+    pub bb_middle: f32,
+    pub bb_lower: f32,
+    pub bb_width: f32,
+    pub bb_width_min_20: f32,
+    pub obv: f32,
+    pub obv_sma_20: f32,
+    pub obv_slope_5: f32,
+    pub volume_ratio_20: f32,
+    pub roc_12: f32,
+    pub stochastic_k: f32,
+    pub williams_r: f32,
+    pub dc_upper_20: f32,
+    pub dc_lower_20: f32,
+    pub dc_upper_252: f32,
+    pub dc_lower_252: f32,
+    pub distance_to_52w_high: f32,
+    pub distance_from_52w_low: f32,
+    pub ema_stack_score: f32,
+    pub consecutive_green: f32,
+    pub consecutive_red: f32,
+    pub supertrend: f32,
+    pub supertrend_flip_bars_ago: f32,
+    pub adx: f32,
+    pub plus_di: f32,
+    pub minus_di: f32,
+    pub vwap: f32,
+    pub vwap_distance_pct: f32,
+    pub cmf_20: f32,
+    pub force_index_2: f32,
+    pub stochastic_d: f32,
+    pub kc_upper: f32,
+    pub kc_lower: f32,
+    pub dc_position_20: f32,
+    pub mtf_alignment_score: u8,
+    pub confluence_score: u8,
+    pub ema_200_ready: bool,
+    pub adx_ready: bool,
+    pub bb_squeeze: bool,
+    pub supertrend_direction: i8,
+    pub supertrend_flipped: bool,
+    pub vwap_side: i8,
+    pub squeeze_released_up: bool,
+    pub squeeze_released_down: bool,
+    pub tf_15m_bullish: bool,
+    pub tf_1h_bullish: bool,
+    pub tf_4h_bullish: bool,
+    pub tf_1d_bullish: bool,
+}

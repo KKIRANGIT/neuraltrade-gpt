@@ -1,9 +1,30 @@
-// DedupEngine
-// Per-screener cooldown tracking: HashMap<(instrument_id, screener_id), last_signal_time>
-// Cross-screener minimum gap: 5 minutes per stock
-// Daily cap per stock: maximum 2 signals per trading day
-// Sector cap: maximum 4 signals per hour per sector
-// Regime blocks: VolatileCrisis blocks ALL signals
-// VolatileSpike: only SCR10 (Perfect Storm) allowed
-// check_dedup(instrument_id, screener_id) -> bool (true = OK to fire)
-// register_signal(instrument_id, screener_id, timestamp) -> void
+use std::collections::HashMap;
+
+use crate::signal::TradingSignal;
+
+pub struct DedupEngine {
+    seen: HashMap<(String, &'static str), usize>,
+}
+
+impl DedupEngine {
+    pub fn new() -> Self {
+        Self {
+            seen: HashMap::new(),
+        }
+    }
+
+    pub fn filter(&mut self, signals: Vec<TradingSignal>) -> Vec<TradingSignal> {
+        signals
+            .into_iter()
+            .filter(|signal| {
+                let key = (signal.symbol.clone(), signal.screener_id);
+                let count = self.seen.entry(key).or_insert(0);
+                if *count >= 1 {
+                    return false;
+                }
+                *count += 1;
+                signal.setup.rr_to_target_2 >= 2.0
+            })
+            .collect()
+    }
+}

@@ -1,13 +1,22 @@
-// ValidationPromptBuilder
-// buildSignalValidationPrompt(TradingSignal, IndicatorSnapshot, MarketContext) -> String
-//   Includes: symbol, direction, entry, stop, target, R:R
-//   Includes: all key indicator values (RSI, MACD, volume, supertrend, etc.)
-//   Includes: ML scores (XGBoost, LightGBM, LSTM probabilities)
-//   Includes: market context (Nifty, VIX, FII, sector, regime)
-//   Includes: events risk flag (earnings, budget, RBI)
-//   Expected output format: VERDICT / CONFIDENCE / REASON / RED_FLAGS / TELUGU
-//
-// buildDeepAnalysisPrompt(StockData) -> String
-//   Full prompt for on-demand stock deep analysis
-//   All chapters: big picture, momentum, volume, etc.
-//   Structured output for StockStory assembly
+package com.neuraltrade.ai.prompt;
+
+import java.util.Map;
+
+public class ValidationPromptBuilder {
+    public String build(Map<String, Object> signalPayload) {
+        return """
+                Validate this trading signal.
+                Symbol: %s
+                Direction: %s
+                Entry: %s
+                Stop: %s
+                Confluence: %s
+                """.formatted(
+                signalPayload.getOrDefault("symbol", "UNKNOWN"),
+                signalPayload.getOrDefault("direction", "BULL"),
+                signalPayload.getOrDefault("entry", 0),
+                signalPayload.getOrDefault("stop", 0),
+                signalPayload.getOrDefault("confluenceScore", 0)
+        );
+    }
+}

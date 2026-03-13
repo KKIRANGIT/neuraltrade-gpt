@@ -1,8 +1,29 @@
-// SignalController
-// GET /api/signals — today's active signals (paginated)
-// GET /api/signals/{id} — single signal detail with story
-// GET /api/signals/history — past signals with outcomes
-// GET /api/signals/accuracy — win rate dashboard data
-// POST /api/signals/{id}/feedback — user marks signal as taken/skipped
-// GET /api/market/regime — current market regime from ML
-// GET /api/market/context — Nifty, VIX, FII, sector summary
+package com.neuraltrade.api.controller;
+
+import java.util.List;
+import java.util.Map;
+
+public class SignalController {
+    public List<Map<String, Object>> todaysSignals() {
+        return List.of(
+                Map.of("id", "SIG-RELIANCE", "symbol", "RELIANCE", "status", "ACTIVE", "score", 88),
+                Map.of("id", "SIG-TCS", "symbol", "TCS", "status", "WATCHLIST", "score", 79)
+        );
+    }
+
+    public Map<String, Object> signalDetail(String id) {
+        return todaysSignals().stream()
+                .filter(signal -> id.equals(signal.get("id")))
+                .findFirst()
+                .orElse(Map.of("id", id, "status", "NOT_FOUND"));
+    }
+
+    public Map<String, Object> marketContext() {
+        return Map.of(
+                "regime", "BULL_TRENDING",
+                "nifty", 24186.4,
+                "vix", 13.7,
+                "fiiFlowCr", 742
+        );
+    }
+}

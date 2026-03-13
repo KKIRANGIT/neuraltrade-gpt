@@ -1,12 +1,44 @@
-// StockScoreboard struct:
-//   instrument_id: u32, symbol: [u8;16]
-//   bull_1m/5m/15m/1h/1d: u8 (0-100 each)
-//   bear_1m/5m/15m/1h/1d: u8
-//   bull_total: u8, bear_total: u8
-//   bull_conditions_1m/.../1d: u16 (bitmask of passed conditions)
-//   bear_conditions_1m/.../1d: u16
-//   signal_direction: i8 (+1 BULL / -1 BEAR / 0 NEUTRAL)
-//   signal_strength: SignalStrength enum
-//   confluence_score: u8
-//   timestamp_ns: u64
-// ScoreboardSnapshot: Vec<StockScoreboard> for all 500 stocks
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScoreInput {
+    pub timeframe: String,
+    pub close: f32,
+    pub ema_9: f32,
+    pub ema_20: f32,
+    pub ema_50: f32,
+    pub ema_200: f32,
+    pub supertrend_direction: i8,
+    pub rsi_14: f32,
+    pub rsi_7: f32,
+    pub macd_histogram: f32,
+    pub prev_macd_histogram: f32,
+    pub roc_12: f32,
+    pub volume_ratio: f32,
+    pub obv_slope_5: f32,
+    pub cmf_20: f32,
+    pub vwap_side: i8,
+    pub bb_squeeze: bool,
+    pub squeeze_released_up: bool,
+    pub dc_position_20: f32,
+    pub adx: f32,
+    pub plus_di: f32,
+    pub minus_di: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimeframeScore {
+    pub timeframe: String,
+    pub bull: u8,
+    pub bear: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScoreboardEntry {
+    pub instrument_id: u32,
+    pub symbol: String,
+    pub bull_total: u8,
+    pub bear_total: u8,
+    pub tier: String,
+    pub timeframe_scores: Vec<TimeframeScore>,
+}

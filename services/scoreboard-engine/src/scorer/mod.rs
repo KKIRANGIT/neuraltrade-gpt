@@ -1,23 +1,59 @@
-// BullScorer: calculate_bull_score(snap: IndicatorSnapshot, tf: Timeframe) -> u8
-//   TREND (max 35 pts):
-//     close > ema_9: +5, close > ema_20: +5, close > ema_50: +7
-//     close > ema_200: +8, ema stack aligned 9>20>50: +5
-//     supertrend_direction == +1: +5
-//   MOMENTUM (max 25 pts):
-//     rsi_14 between 50-70: +8, rsi_7 > rsi_14: +4
-//     macd_histogram > 0: +5, macd_histogram rising: +4, roc_12 > 2: +4
-//   VOLUME (max 20 pts):
-//     volume_ratio > 1.5: +7, volume_ratio > 2.5 bonus: +5
-//     obv_slope_5 > 0: +5, cmf_20 > 0.05: +3
-//   STRUCTURE (max 20 pts):
-//     close > vwap (intraday): +5, bb_squeeze: +4
-//     squeeze_released_up: +6, dc_position_20 > 0.7: +5
-//     adx > 25 AND plus_di > minus_di: +5
-//   clamp result to 0-100
-//
-// BearScorer: calculate_bear_score(snap, tf) -> u8
-//   Mirror logic with inverted conditions:
-//     close < ema_9/20/50/200, ema stack bearish order
-//     rsi 30-50, macd_histogram < 0 and falling
-//     volume on down days, obv_slope < 0
-//     close < vwap, squeeze_released_down, dc_position < 0.3
+use crate::models::{ScoreInput, TimeframeScore};
+
+pub fn score_timeframe(input: &ScoreInput) -> TimeframeScore {
+    let mut bull = 0_u8;
+    let mut bear = 0_u8;
+
+    bull += score_condition(input.close > input.ema_9, 5);
+    bull += score_condition(input.close > input.ema_20, 5);
+    bull += score_condition(input.close > input.ema_50, 7);
+    bull += score_condition(input.close > input.ema_200, 8);
+    bull += score_condition(input.ema_9 > input.ema_20 && input.ema_20 > input.ema_50, 5);
+    bull += score_condition(input.supertrend_direction == 1, 5);
+    bull += score_condition((50.0..=70.0).contains(&input.rsi_14), 8);
+    bull += score_condition(input.rsi_7 > input.rsi_14, 4);
+    bull += score_condition(input.macd_histogram > 0.0, 5);
+    bull += score_condition(input.macd_histogram > input.prev_macd_histogram, 4);
+    bull += score_condition(input.roc_12 > 2.0, 4);
+    bull += score_condition(input.volume_ratio > 1.5, 7);
+    bull += score_condition(input.volume_ratio > 2.5, 5);
+    bull += score_condition(input.obv_slope_5 > 0.0, 5);
+    bull += score_condition(input.cmf_20 > 0.05, 3);
+    bull += score_condition(input.vwap_side > 0, 5);
+    bull += score_condition(input.bb_squeeze, 4);
+    bull += score_condition(input.squeeze_released_up, 6);
+    bull += score_condition(input.dc_position_20 > 0.7, 5);
+    bull += score_condition(input.adx > 25.0 && input.plus_di > input.minus_di, 5);
+
+    bear += score_condition(input.close < input.ema_9, 5);
+    bear += score_condition(input.close < input.ema_20, 5);
+    bear += score_condition(input.close < input.ema_50, 7);
+    bear += score_condition(input.close < input.ema_200, 8);
+    bear += score_condition(input.ema_9 < input.ema_20 && input.ema_20 < input.ema_50, 5);
+    bear += score_condition(input.supertrend_direction == -1, 5);
+    bear += score_condition((30.0..=50.0).contains(&input.rsi_14), 8);
+    bear += score_condition(input.rsi_7 < input.rsi_14, 4);
+    bear += score_condition(input.macd_histogram < 0.0, 5);
+    bear += score_condition(input.macd_histogram < input.prev_macd_histogram, 4);
+    bear += score_condition(input.roc_12 < -2.0, 4);
+    bear += score_condition(input.volume_ratio > 1.5, 7);
+    bear += score_condition(input.obv_slope_5 < 0.0, 5);
+    bear += score_condition(input.cmf_20 < -0.05, 3);
+    bear += score_condition(input.vwap_side < 0, 5);
+    bear += score_condition(input.dc_position_20 < 0.3, 5);
+    bear += score_condition(input.adx > 25.0 && input.plus_di < input.minus_di, 5);
+
+    TimeframeScore {
+        timeframe: input.timeframe.clone(),
+        bull: bull.min(100),
+        bear: bear.min(100),
+    }
+}
+
+fn score_condition(condition: bool, points: u8) -> u8 {
+    if condition {
+        points
+    } else {
+        0
+    }
+}
